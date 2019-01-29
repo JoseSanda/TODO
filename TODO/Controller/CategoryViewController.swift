@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     let realm = try! Realm()
     
@@ -18,6 +19,7 @@ class CategoryViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadItems()
+        tableView.separatorStyle = .none
     }
     
     //MARK - TableView DataSource
@@ -25,9 +27,15 @@ class CategoryViewController: UITableViewController {
         return categories?.count ?? 1
     }
     
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories added yet"
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        if let category = categories?[indexPath.row] {
+            cell.textLabel?.text = category.name
+            cell.backgroundColor = UIColor(hexString: category.color)
+        }else{
+             cell.textLabel?.text = "No categories added yet"
+        }
         return cell
     }
     
@@ -40,6 +48,7 @@ class CategoryViewController: UITableViewController {
             (action) in
             let category = Category()
             category.name = textField.text!
+            category.color = UIColor.randomFlat.hexValue()
             self.save(category: category)
             
         }
@@ -60,7 +69,7 @@ class CategoryViewController: UITableViewController {
                 realm.add(category)
             }
         } catch{
-            print("Error saving context!, \(error)")
+            print("Error saving!, \(error)")
         }
         self.tableView.reloadData()
     }
@@ -80,5 +89,17 @@ class CategoryViewController: UITableViewController {
     //MARK - TableView Delegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "goToItems", sender: self)
+    }
+    
+    override func delete(_ indexPath: IndexPath){
+        if let category = self.categories?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(category)
+                }
+            } catch{
+                print("Error on delete!, \(error)")
+            }
+        }
     }
 }
