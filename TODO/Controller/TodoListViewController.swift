@@ -20,9 +20,32 @@ class TodoListViewController: SwipeTableViewController {
     
     let realm = try! Realm()
     var items: Results<Item>?
+    @IBOutlet weak var searchBar: UISearchBar!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.separatorStyle = .none
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        guard let colourHex = selectedCategory?.colour else {fatalError()}
+        title = selectedCategory?.name
+        updateNavBar(withHexCode: colourHex)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        updateNavBar(withHexCode: "1D9BF6")
+    }
+    
+    //MARK - Navbar setup
+    
+    func updateNavBar(withHexCode colourHexCode: String){
+        guard let navBar = navigationController?.navigationBar else{fatalError("Navigationbar not exits")}
+        guard let colour = UIColor(hexString: colourHexCode) else {fatalError()}
+        navBar.barTintColor = colour
+        navBar.tintColor = ContrastColorOf(colour, returnFlat: true)
+        navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: ContrastColorOf(colour, returnFlat: true)]
+        searchBar.barTintColor = colour
     }
 
     //MARK - Tableview Datasource methods
@@ -35,7 +58,7 @@ class TodoListViewController: SwipeTableViewController {
         if let item = items?[indexPath.row] {
             cell.textLabel?.text = item.title
             cell.accessoryType = item.done ? .checkmark : .none
-            if let colour = UIColor(hexString: selectedCategory!.color)?.darken(byPercentage: CGFloat(indexPath.row)/CGFloat(items!.count)) {
+            if let colour = UIColor(hexString: selectedCategory!.colour)?.darken(byPercentage: CGFloat(indexPath.row)/CGFloat(items!.count)) {
                 cell.backgroundColor = colour
                 cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: colour, isFlat: true)
             }
